@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: fdw-sync
+  labels:
+    tags.datadoghq.com/env: {{K8S_ENVIRONMENT}}
+    tags.datadoghq.com/service: {{APPLICATION}}
+spec:
+  schedule: "0 19 * * *" 
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: fdw-sync
+            image: python:3.10-slim
+            command: ["sh", "-c"]
+            args:
+              - |
+                pip install psycopg2-binary;
+                python /scripts/fdw_sync.py
+            volumeMounts:
+              - name: sync-script
+                mountPath: /scripts
+              - name: config-volume
+                mountPath: /config
+            env:
+              - name: CONFIG_FILE
+                value: /config/connections.json
+          restartPolicy: OnFailure
+          volumes:
+            - name: sync-script
+              configMap:
+                name: fdw-sync-script
+            - name: config-volume
+              configMap:
+                name: fdw-sync-config
+
+
+# Config map is created directly from the script and connections.json file holding the credentials (lives in 1password, tech admins vault)

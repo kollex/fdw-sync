@@ -1,0 +1,21 @@
+version: "1.0"
+# Stages can help you organize your steps in stages
+stages:
+  - "Deployment"
+steps:
+  DeployToProduction:
+    stage: 'Deployment'
+    title: 'Deploy cronjob to prod'
+    image: codefresh/cf-deploy-kubernetes:16.2.7
+    working_directory: ${{clone}}/manifests/
+    environment:
+      - KUBECONTEXT=${{K8S_PRODUCTION_CLUSTER}}
+      - KUBERNETES_NAMESPACE=${{K8s_NAMESPACE}}
+      - AWS_ACCOUNT_ID=${{SHARED_AWS_ACCOUNT_ID}}
+      - K8S_ENVIRONMENT='production'
+      - APPLICATION=${{CF_REPO_NAME}}
+      - SERVICE_FQDN={{APPLICATION}}.pd.kollex.io
+      - INGRESS_GROUP_NAME=${{PRODUCTION_INGRESS_GROUP_NAME}}
+
+    commands:
+      - /cf-deploy-kubernetes production/cronjob.yaml
